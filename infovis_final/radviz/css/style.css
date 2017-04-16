@@ -1,0 +1,307 @@
+/*
+Style Sheet for UN N-Polar
+Jeon Tae Il @ SNU HCC LAB
+11. 25. 2014.
+*/
+
+body{
+	background:rgb(251,251,251);
+	height:0px;
+}
+.wrapper{
+	display:block;
+	margin:0 auto;
+	margin-top:0px;
+	position: relative;
+	padding-bottom:20px;
+}
+
+canvas { float:left; background:rgb(241, 241, 241);}
+
+section{
+	position:relative;
+	float:left;
+	overflow:hidden;
+}	
+nav{
+	position:relative;
+	float:left;
+	/*margin-right:10px;*/
+	width: 300px;
+	height:800px;
+	overflow:hidden;
+}
+
+	.sidemenu{
+		display:block;
+		float:left;
+		margin-bottom:10px;
+		width:290px;
+		background-color:#F1F1F1;
+		padding-bottom:10px;
+	}
+
+	.menu{
+		border : 1px solid black;
+		padding-top:10px;
+		padding-bottom:10px;
+		padding-left:20px;
+	}
+	
+	.menu-title{
+		font-family:Open Sans;
+		margin-top:10px;
+		margin-bottom:10px;
+		margin-left:10px;
+		color:#717171;
+	}
+	#color-indicator{
+		display:block;
+		margin:0 20px;
+		width:230px;
+	}
+	#color-info-container{
+		width:230px; 
+		/*height:171px; */
+		margin:0 20px;
+        padding-top: 10px; padding-bottom: 10px;
+		overflow:auto;/*scroll;*/
+		background:white;
+	}
+
+	.color-info{
+		margin-top:2px;
+		cursor:pointer;
+		width:180px;
+        font-weight: bold;
+	}
+
+	.color-info a{
+		display:block; 
+		margin-left:10px; 
+		margin-right:10px; 
+		float:left; 
+		width:20px; 
+		height:20px; 
+		text-decoration:none;
+	}
+
+	/*.color-info a:hover{
+		width:16px;
+		height:16px;
+		border:2px solid black;
+	}*/
+	
+	.color-info span:hover{
+		width:100%;
+		font-weight:bold;
+	}
+
+    .color-info span.opaque {
+        width:100%;
+        font-weight:normal;
+    }
+		
+		#nat-check-container{
+			display:block;
+		}
+		#nat-radio-container{
+			display:none;
+		}
+		
+		.nat-container{
+			margin:0 20px;
+			/*width:180px;*/
+			margin-bottom:10px;
+		}
+		
+		#nat_list{
+			display:block;
+		}
+		
+		.nat_search{
+			width:165px;
+			background:url("../img/searchico.png") no-repeat;
+			background-position:210px 7px;
+		}
+
+		.allcheck{
+			margin-right: 20px;
+			float:right;
+		}
+		
+		.allcheck .btn{
+			font-size:1px;
+			width:30px;
+			height:10px;
+			margin-top:10px;
+			padding-top:0px;
+			padding-bottom:10px;
+		}
+		#allcheck{
+			margin-right: 20px;
+			float:right;
+		}
+		
+		#allcheck .btn{
+			font-size:1px;
+			width:30px;
+			height:10px;
+			margin-top:10px;
+			padding-top:0px;
+			padding-bottom:10px;
+		}
+		
+		.toggle-in{
+		    float:left;
+			width:170px;
+		}
+
+		#allcheck:hover{/*
+			background:black;
+			color:white;
+			cursor:pointer;*/
+		}
+
+		.nat{
+			/*width:250px;*/
+			padding-left: 10px;
+            margin: 2px 0 0 0;
+			text-align: left;
+		}
+
+		.nat:hover{
+		/*
+			background:rgb(0,134,201);
+			color:white;
+			
+			vertical-align:top;
+			-webkit-transition-duration:0.3s;
+			*/
+			color:rgb(0,134,201);
+			cursor:pointer;
+		}
+		
+		#issSelect{
+			height:75px;
+		}
+		
+		#issSelect-select{
+			width:210px;
+			font-size:12px;
+			margin-left:20px;
+			display:block;
+		}
+		
+	
+
+
+
+
+.nat-scroll{
+	width:250px;
+	/*overflow-x:scroll;*/
+	overflow-y:scroll;
+	background-color:white;
+}
+
+
+
+textarea, input[type="text"]{
+	display:inline-block;
+	margin-left:20px;
+    width: 220px;
+	border-color: 1px solid #ccc;
+	-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075), 0 0 8px rgba(0,0,0,0.075);
+	-moz-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075), 0 0 8px rgba(0,0,0,0.075);
+	box-shadow: inset 0 1px 1px rgba(0,0,0,0.075), 0 0 8px rgba(0,0,0,0.075);
+	-webkit-transition-duration:0.9s;
+}
+
+textarea:focus, input[type="text"]:focus{
+	outline:0;
+	border-color: rgba(0,134,201,0.8);
+	-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(0,134,201,0.8);
+	-moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(0,134,201,0.8);
+	box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(0,134,201,0.8);
+	-webkit-transition-duration:0.9s;
+}
+
+
+/* new menu - additional UI */
+
+
+    .compare-ratio-menu{
+        display:block;
+        height: 300px;
+        float:left;
+        margin-bottom:10px;
+        width:260px;
+        background-color:#F1F1F1;
+        padding-bottom:10px;
+    }
+
+
+    .anchor-info-container{
+        width:240px; 
+        /*height:200px; */
+        margin:5px auto 3px auto;
+        padding: 5px; 
+        overflow: auto; /*scroll;*/
+        background:white;
+    }
+
+    .edgeWidget {
+        margin: 10px;
+        padding: 10px;
+        border: 1px solid black;
+    }
+
+    .main-anchor-container{
+        width:220px; 
+        height:25px; 
+        /*margin:0 auto;*/
+        padding: 2px 0px 2px 5px;
+        overflow:hidden;/*scroll;*/
+        background:white;
+    }
+
+    .deleteEW {
+        float:right;
+        cursor: pointer;
+    }
+
+    .anchor-info{
+        margin-top:2px;
+        /*width:160px;*/
+    }
+
+    .anchor-info a{
+        display:block; 
+        margin-left:10px; 
+        margin-right:10px; 
+        float:left; 
+        width:20px; 
+        height:20px; 
+        text-decoration:none;
+    }
+
+/*    .color-info a:hover{
+        width:16px;
+        height:16px;
+        border:2px solid black;
+    }
+    
+    .color-info span:hover{
+        width:100%;
+        font-weight:bold;
+    }
+*/
+
+
+
+
+
+
+
+

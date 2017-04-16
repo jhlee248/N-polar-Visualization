@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Force-Directed Layout (Multiple Foci)</title>
+    <link rel="stylesheet" href="multiselect-widget/jquery.multiselect.css">
+    <link rel="stylesheet" href="multiselect-widget/jquery.multiselect.filter.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="multiselect-widget/src/jquery.multiselect.js"></script>
+    <script src="multiselect-widget/src/jquery.multiselect.filter.js"></script>
+
+<script src="handleAnchors.js"></script>
+<script src="handleControl.js"></script>
+<script src="handleMode.js"></script>
+
+<link rel="stylesheet" href="../tickslider/jquery.ui.labeledslider.css">
+<script src="../tickslider/jquery.ui.labeledslider.js"></script>
+
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+
+<link rel="stylesheet" href="css/jquery-ui-1.10.0.custom.css" />
+<link rel="stylesheet" href="css/bootstrap.css"/>
+<link rel="stylesheet" href="css/style.css"/>
+
+
+  <style>
+        body {
+            font-size: 13px;
+        }
+        .sliderwrapper {
+          width: 1000px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .sliderwrapper > div {
+          margin: 25px 0;
+        }
+
+        .unclickable {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        svg {
+            border: 1px solid black;
+        }
+        circle {
+            stroke-width: 0.5px;
+        }
+        [type=anchor] { fill: black }
+        .d circle:hover { /*fill: red; opacity: 0.8 */ stroke-width: 1.5px; }
+        line { stroke: grey; opacity: 0.05; }
+
+
+        div.ccc {
+            display: flex;
+            margin-left: auto;
+            margin-right:auto;
+            width: 1500px;
+            margin-bottom: 10px;
+        }
+
+        div#control {
+            width: 300px;
+        }
+
+        g.d text, g.s text {
+          font: 18px 'Open Sans', sans-serif;
+          text-anchor: middle;
+          pointer-events: none;
+          fill: black;
+        }
+
+        div.loadingText {
+            font-size: 200px;
+            position: fixed;
+            width: 100%;
+            text-align: center;
+            padding-top: 500px;
+        }
+  </style>
+  </head>
+
+  <body>
+<div class="sliderwrapper">
+  <div id="yeartext" style="text-align:center;">1946</div>
+  <div id="slider"></div>
+</div>
+
+    <div class="ccc">
+        <div style="width: 300px; margin: 0 auto; font-size: 10px; text-align: right;"> <i>Right-Click on the node to see its Details here </i></div>
+        <div style="width: 800px; margin: 0 auto;"> </div>
+        <div id="mode" style="width: 300px; margin: 0 auto;">
+            <input type="radio" name="mode" value="dynamic" onclick="toggleControl(this.value); changeMode(this.value);" checked> DYNAMIC&nbsp;
+            <input type="radio" name="mode" value="static" onclick="var r = askForPermission(this.value); if (r) changeMode(this.value); "> STATIC
+        </div>
+    </div>
+
+  <div id="container" class="ccc">
+    <div id="control0" class="wrapper">
+        <nav>
+        <div class="sidemenu" id="nodeEdges" style="overflow: auto; height: 800px">
+            <div id="insertafterdiv" style="height: 35px;">
+                <div class="menu-title toggle-in">Compare Nation Ratio</div>
+                <div class="allcheck" onclick="deleteAllEdgeWidget();" title="Delete all details below">
+                    <span class="btn">ALL</span>
+                </div>
+            </div>
+        </div>
+        </nav>
+    </div>      
+    <div><svg></svg></div>
+    <div id="control" class="wrapper">
+        <nav>
+            <div id="natColor" class="sidemenu"><div class="menu-title">Nation Color</div>
+                <div id="color-indicator">
+                    <select style="font-size:12px;">
+                        <option name="region">Region</option>
+                    </select>
+                </div>
+                <div id="color-info-container">
+                </div>
+            </div><!--col-->
+            <div id="natSelect" class="sidemenu"><div class="menu-title toggle-in">Select Anchors</div>
+            <div id="allcheck" onclick="javascript:CheckAll(), selectDelRow()" title="Delete all anchors">
+                <span class="btn">ALL</span>
+            </div>
+                <input type="text" class="nat_search" onkeyup="javascript:sorting()" />
+                <div id="nat-check-container" class="nat-container" style="display: block;">
+                    <!-- UN에 가입한 나라 198개 세팅 스크롤링 기능 정-->
+                    <div id="nat_list" class="nat-scroll" style="height: 450px;">
+                    <!-- originally 375px -->
+                    </div>    
+                </div><!--nat-->
+        </nav><!--UI 종료-->
+    
+    </div><!--wrapperEND-->
+  </div>
+
+
+<script type="text/javascript">
+var w = 800, h = 800,
+    centerX = w/2, centerY = h/2, bigRadius = 375, anchorRadius = 16, smallRadius = 12;
+
+var vis = d3.select("body div#container svg")
+    .attr("width", w)
+    .attr("height", h);
+
+var tooltip = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+    .text("bla");
+
+var force = d3.layout.force()
+    .size([w, h]);
+
+var simil2link = d3.scale.pow().exponent(3.5)//.linear()
+                    .domain([0,1])
+                    .range([0,1]);
+
+var startYear = 1946, endYear = 2012;
+
+// Decide node's color depending on the nodes' regions
+var regions = ["Africa", "Asia", "Europe", "North America", "South America", "Oceania"];
+var colors = ["#966062", "#4E5FAB", "#F79733", "#A04C9C", "#FBED21", "#2FB14B"];
+var fillNode = d3.scale.ordinal().domain(regions).range(colors);
+
+// Default anchor nodes
+var anchorPos = {
+    "RUS": {"x": null, "y": null},
+    "USA": {"x": null, "y": null}
+}
+
+// Contains index for every node value for global usage
+var nodeInfo = {};
+var currdata = {};
+
+var inputJson;
+function update() {
+    force
+        .nodes(inputJson.n)
+        .links(inputJson.l)
+        .linkStrength(function(d) {return d.value})
+        .charge(0)
+        .gravity(0)
+        .start();
+
+    var link = vis.selectAll("line")
+            .data(inputJson.l, function (d) {
+                return d.source.index + "-" + d.target.index;
+            });
+
+    link.enter().append("line")
+            .attr("id", function (d) {
+                return d.source.index + "-" + d.target.index;
+            })
+            .attr("class", "link");
+
+    link.exit().remove();
+
+    var id = 0;
+    var node = vis.selectAll("g.d")
+                .data(inputJson.n, function(d) {
+                    return id++; //d.index; //id++;
+                });
+
+    var nodeEnter = node
+                .enter().append("g")
+                .attr("class", "d")
+                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+                .on("mousedown", function(d) {
+                    var sel = d3.select(this);
+                    sel.moveToFront();
+                })
+                .on("contextmenu", function(d) { // Right click to see the details
+                    d3.event.preventDefault();
+                    addEdgeWidget(d);
+                })
+                .call(force.drag);
+
+    nodeEnter.append("circle")
+            .attr("type", function(d) { return d.type; })
+            .attr("r", function(d) { return d.radius; })
+            .style("stroke", "black")
+            .style("fill", function(d) { return d.fill; });
+
+    nodeEnter.append("text")
+            .text(function(d) {
+                    if (d.class != "notUN") return d.key;
+                })
+            .style("font-size", function(d) {
+                return Math.min(2 * d.radius, (2 * d.radius - 8) / this.getComputedTextLength() * 16) + "px"; 
+            })
+            .attr("dy", ".35em");
+
+    node.exit().remove();
+
+    force.on("tick", function(e) {
+        link.attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
+
+        var q = d3.geom.quadtree(inputJson.n),
+            i = 0,
+            n = inputJson.n.length;
+
+        while (++i < n) q.visit(collide(inputJson.n[i], e.alpha, 2));
+
+        node.attr("transform", function(d) {
+            if (isNaN(d.x) || isNaN(d.y)) return;
+
+            d.x = Math.max(d.radius, Math.min(w-d.radius, d.x));
+            d.y = Math.max(d.radius, Math.min(h-d.radius, d.y));
+
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+        
+        node.attr("", function(d){
+            if (d.class == "anchor") {
+                var sel = d3.select(this);
+                sel.moveToFront();
+            }
+        });
+    });
+
+    regionClicked(null);
+    changeOpacity();
+}
+
+function changeOpacity() {
+    var node = vis.selectAll("g.d");
+        node.style("opacity", function(d) {
+                if (d.class == "notUN") return 0.0;
+                if (d.opacity == 0) console.log(d.opacity);
+                return d.opacity; 
+            });
+}
+
+// When we hover over the nodes, the nodes would go up 
+d3.selection.prototype.moveToFront = function() {
+    return this.each(function() {
+        this.parentNode.appendChild(this);
+    });
+}
+
+
+var anchorEdge = {};
+function loadData() {
+    for (var Y = startYear; Y < endYear + 1; Y++) {
+        (function (_Y) {
+            d3.csv("../dataset/" + _Y + "_FINAL.csv", function(err, data) {
+                var oneYearData = {"n": [], "l": []};
+                var oneYearAnchorEdge = {};
+                for (var cc3 in anchorPos) {
+                    oneYearAnchorEdge[cc3] = {};
+                }
+                for (var cc3 in nodeInfo) {
+                    oneYearData.n.push({
+                        "key": cc3,
+                        "class": "notUN",
+                        "radius": smallRadius,
+                        "fill": "black",
+                        "region": nodeInfo[cc3].region,
+                        "x": centerX, "y": centerY
+                    });
+                }
+                data.forEach(function (d) {
+                    // d looks like: { 1946: USA, AFG: simil, AGO: simil, ... }
+                    if (d[_Y] in anchorPos) {
+                        var anchorCC3 = d[_Y];
+                        var anchornode = {
+                            "key": anchorCC3,
+                            "x": anchorPos[anchorCC3].x,
+                            "y": anchorPos[anchorCC3].y,
+                            "fixed": true, "fill": fillNode(nodeInfo[d[_Y]].region),
+                            "radius": anchorRadius,
+                            "type": "anchor", "class": "anchor",
+                            "region": nodeInfo[d[_Y]].region
+                        };
+                        oneYearData.n[nodeInfo[anchorCC3].index] = anchornode;
+
+                        Object.keys(d).forEach(function (ccode) {
+                            if ((ccode in nodeInfo) == false) {
+                                if (ccode != _Y) console.log(ccode, " not in nodeInfo");
+                                return;
+                            }
+
+                            // No need to consider the self-link
+                            // and no need to consider the link with other anchors
+                            if (ccode == _Y) return;
+                            
+                            var simil = simil2link(parseFloat(d[ccode]));
+                            if (simil < -1) return; // not a UN member yet
+                            if (ccode in anchorPos) {
+                                oneYearAnchorEdge[anchorCC3][ccode] = simil;
+                                return;
+                            }
+
+                            var node = {"key": ccode,
+                                        "class": "node",
+                                        "fill": fillNode(nodeInfo[ccode].region), 
+                                        "radius": smallRadius, "region": nodeInfo[ccode].region,
+                                        "x": centerX, "y": centerY };
+
+                            oneYearData.n[nodeInfo[ccode].index] = node;
+
+                            var link = {"source": nodeInfo[ccode].index, 
+                                        "target": nodeInfo[anchorCC3].index,
+                                        "value" : simil };
+
+                            oneYearData.l.push(link);
+                        });
+                    }
+                });
+                anchorEdge[_Y] = oneYearAnchorEdge;
+                currdata[_Y] = oneYearData;
+
+            });
+        })(Y);
+    }
+}
+
+var setupNodeInfo = function() {
+    var r = $.Deferred();
+
+    // https://github.com/mledoze/countries/blob/master/countries.json
+    (function () {
+        d3.json("../dataset/allNodes_withRegion.json", function(err, data) {
+            for (var cc3 in data) {
+                nodeInfo[cc3] = data[cc3];
+            }
+        })
+    })();
+
+    var timeID = setInterval(function() {
+        // repeatedly wait for 50 millisec until currdata gets uploaded
+        if (Object.keys(nodeInfo).length >= 193) {
+            var nationhtml = "";
+
+            var sortedKeys = Object.keys(nodeInfo);
+            sortedKeys.sort();
+            for (var k = 0; k < sortedKeys.length; k++) {//cc3 in nodeInfo) {
+                var cc3 = sortedKeys[k];
+                nationhtml += "<div class='nat onoff-menu' >";
+                nationhtml += "<input onclick='selectDelRow();' id='" + cc3 
+                            + "' type=checkbox name=del_unit[] value='" + cc3;
+                
+                if (cc3 in anchorPos) nationhtml += "' checked> ";
+                else nationhtml += "' > ";
+
+                nationhtml += "<label for='" + cc3 + "'> "
+                nationhtml += cc3 + " (" + nodeInfo[cc3].name + ")" + "</label> </div>";
+            }
+
+            $("div#nat_list").append(nationhtml);
+
+            clearInterval(timeID);
+            r.resolve();
+        }
+    }, 50);
+
+    return r;    
+}
+
+function checkAllAnchorPos() {
+    for (var anc in anchorPos) {
+        if (anchorPos[anc].x == null) return false;
+        if (anchorPos[anc].y == null) return false;
+    }
+    return true;
+}
+
+var setAnchorPosReady = function() {
+    var r = $.Deferred();
+    
+    setAnchorPos();
+    var timeID = setInterval(function() {
+        // repeatedly wait for 50 millisec until data gets uploaded
+        if (checkAllAnchorPos()) {
+            clearInterval(timeID);
+            r.resolve();
+        }
+    }, 50);
+
+    return r;
+};
+
+var waitOnDataUpload = function() {
+    var r = $.Deferred();
+
+    currdata = {};
+    loadData();
+    var timeID = setInterval(function() {
+        // repeatedly wait for 50 millisec until currdata gets uploaded
+        if (Object.keys(currdata).length > (endYear - startYear)) {
+            clearInterval(timeID);
+            r.resolve();
+        }
+    }, 50);
+
+    return r;
+};
+
+var updateOnAnchorSet = function() {
+    setAnchorPosReady().done(function(){
+        waitOnDataUpload().done(function() {
+            var curryear = $("#yeartext").html();
+            if (curryear == undefined) curryear = startYear;
+            inputJson = currdata[curryear];
+            update();
+        });
+    });
+};
+
+setupNodeInfo().done(function() {
+    updateOnAnchorSet();
+});
+
+
+var n = 3;
+function makeTransition(slideryear) {
+    inputJson = currdata[slideryear];
+    force.stop();
+    update();
+    for (var i = n * n; i > 0; --i) force.tick();
+    return inputJson;
+}
+
+
+// Make the anchor nodes move around the perimeter of a circle
+var dragAround = force.drag() //d3.behavior.drag()
+    .on("drag", function(d) {
+        if (d.class == "anchor") {
+            var mx = d3.event.x; 
+            var my = d3.event.y;
+
+            var omega = Math.atan2(mx - centerX, my - centerY);
+            var px = centerX + bigRadius * Math.sin(omega);
+            var py = centerY + bigRadius * Math.cos(omega);
+
+            var i = d.index; 
+            inputJson.n[i].x = px;
+            inputJson.n[i].px = px;
+            inputJson.n[i].y = py;
+            inputJson.n[i].py = py;
+
+            for(var y = startYear; y < endYear + 1; y++) {
+                currdata[y].n[i].x = px;
+                currdata[y].n[i].px = px;
+                currdata[y].n[i].y = py;
+                currdata[y].n[i].py = py;
+            }
+        }
+    });
+
+
+// Handle the collision of the nodes - control the way they overlap
+function collide(node, alpha, overlap_threshold) {
+  var r = node.radius + 16,
+      nx1 = node.x - r,
+      nx2 = node.x + r,
+      ny1 = node.y - r,
+      ny2 = node.y + r;
+  return function(quad, x1, y1, x2, y2) {
+    if (quad.point && (quad.point !== node)) {
+      var x = node.x - quad.point.x,
+          y = node.y - quad.point.y,
+          l = Math.sqrt(x * x + y * y),
+          r = node.radius + quad.point.radius;
+      if (l + overlap_threshold < r) {
+        l = (l - r) / l * alpha; //.5;
+        node.x -= x *= l;
+        node.y -= y *= l;
+        quad.point.x += x;
+        quad.point.y += y;
+      }
+    }
+    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+  };
+}
+
+// Create the big global circle
+vis.selectAll("circle")
+    .data([1])
+    .enter().append("svg:circle")
+    .attr("id", "ring")
+    .attr("cx", centerX)
+    .attr("cy", centerY)
+    .attr("r", bigRadius)
+    .style("stroke", "black")
+    .style("fill", "none");
+
+// Create the time slider
+$(function() {
+    $("#slider").labeledslider({ 
+        min: startYear, 
+        max: endYear, 
+        step:1, 
+        tickInterval: 4,
+        slide: function(event, ui) {
+            $("#yeartext").html(ui.value);
+            var mode = $("input[name=mode]:checked").val();
+            if (mode == "dynamic")
+                makeTransition(ui.value);
+            else
+                makeStaticTransition(ui.value);
+        },
+        change: function(event, ui) {
+            //makeTransition(ui.value);
+        }
+    });
+});
+
+$(document).ready(function(){
+    // Make the slider handle thinner
+    $(".ui-slider-horizontal .ui-slider-handle").css("margin-left", "-0.3em");
+    $(".ui-slider .ui-slider-handle").css("width", "0.6em");
+
+    // Layout the Color code control widget
+    var colorinfohtml = "";
+    for (var i = 0; i < regions.length; i++) {
+        colorinfohtml += "<div class='color-info'><a style=background:" + colors[i] 
+                      + "></a><span onclick=regionClicked(this); >" + regions[i] + "</span></div>";
+    }
+    $("div#color-info-container").append(colorinfohtml);
+});
+
+
+function updateOpaqueNodes(opa) {
+    inputJson.n[i].py = py;
+    var len = inputJson.n.length;
+    for (var i = 0; i < len; i++) {
+        inputJson.n[i].opacity = opa[inputJson.n[i].region];
+    }
+}
+</script>
+
+  </body>
+</html>

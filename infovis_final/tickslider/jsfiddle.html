@@ -1,0 +1,95 @@
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+
+
+<style>
+
+body {
+    font-size: 0.8em;
+    margin: 2em;
+}
+
+#slider {
+    width: 40%;
+}
+
+.ui-slider-tick {
+    position: absolute;
+    width: 2px;
+    height: 16px;
+    z-index: -1;
+}
+
+</style>
+<body>
+<div id="mytext"></div>
+<div id="slider"></div>
+<script>
+//http://jsfiddle.net/Qyt4a/33/
+(function( $, undefined ) {
+
+    // Defines the custom implementation of the built-in slider widget.
+    $.widget( "app.slider", $.ui.slider, {
+    
+        // The new "ticks" option defaults to false.
+        options: {
+            ticks: false
+        },
+    
+        // Called when the slider is instantiated.
+        _create: function() {
+            
+            // Call the orginal constructor, creating the slider normally.
+            this._super();
+    
+            // If the "ticks" option is false or the "step" option is
+            // less than 5, there's nothing to do.
+            if ( !this.options.ticks || this.options.step < 5 ) {
+                return;
+            }
+    
+            // Setup some variables for rendering the tick marks below the slider.
+            var cnt = this.options.min + this.options.step,
+                background = this.element.css( "border-color" ),
+                left;
+    
+            while ( cnt < this.options.max ) {
+                
+                // Compute the "left" CSS property for the next tick mark.
+                left = ( cnt / this.options.max * 100 ).toFixed( 2 ) + "%";
+    
+                // Creates the tick div, and adds it to the element. It adds the
+                // "ui-slider-tick" class, which has common properties for each tick.
+                // It also applies the computed CSS properties, "left" and "background".
+                $( "<div/>" ).addClass( "ui-slider-tick" )
+                             .appendTo( this.element )
+                             .css( { left: left, background: background } );
+    
+                cnt += this.options.step;
+    
+            }
+    
+        }
+    
+    });
+        
+    $(function() {
+    
+        $( "#slider" ).slider({
+            range: "min",
+            min: 0,
+            max: 200,
+            step: 20,
+            ticks: true,
+            slide: function(d) { $("#mytext").html(d); }
+        });
+    
+    });
+
+})( jQuery );
+
+
+</script>
+</body>

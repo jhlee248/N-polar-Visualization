@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Force-Directed Layout (Multiple Foci)</title>
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <!--script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script-->
+    <!-- // <script type="text/javascript" src="http://mbostock.github.com/d3/d3.geom.js"></script>
+    // <script type="text/javascript" src="http://mbostock.github.com/d3/d3.layout.js"></script> -->
+  <style>
+        svg {
+            border: 1px solid black;
+        }
+        circle {
+            stroke: black;
+            fill: steelblue;
+        }
+        [type=anchor] { fill: black }
+        circle:hover { fill: red; opacity: 0.8}
+        line { stroke: grey; opacity: 0.2}
+  </style>
+  </head>
+
+  <body>
+  Start by wrinting "update();" on console
+  <input type="button" value="change" onclick="transNode();"/>
+    <input type="button" value="change" onclick="transNode2();"/>
+
+    <input type="button" value="change" onclick="transNode3();"/>
+    <script type="text/javascript">
+
+var w = 960, h = 800,
+    centerX = w/2, centerY = h/2, bigRadius = 300;
+
+var vis = d3.select("body").append("svg")
+    .attr("width", w)
+    .attr("height", h);
+
+var tooltip = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+    .text("bla");
+
+var force = d3.layout.force()
+    .size([w, h]);
+
+var simil2link = d3.scale.pow().exponent(3.5)//.linear()
+                    .domain([0,1])
+                    .range([0,1]);
+
+var startYear = 1946, endYear = 2012;
+//var inputJson = {"n": [], "l": [], "done": false};
+var anchorIndex = {"USA": 0, "RUS": 1, "BRA": 2, "CAN": 3};
+var anchorPos = {"USA": {"x":250, "y":100}, 
+                 "RUS": {"x":400, "y":400},
+                 "BRA": {"x":100, "y":400},
+                 "CAN": {}};
+var nodeIndex = {};
+var index = 4;
+          
+
+var inputJson = {
+"n": [  {"key": "USA", "x":400, "y":100, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "RUS", "x":400, "y":500, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "CAN", "x":600, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "BRZ", "x":200, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"},
+        {"key": "test1", "class": "node", "radius": 6}
+      ],
+"l": [ {"source": 4, "target": 0, "value": Math.random()}, 
+        {"source": 4, "target": 1, "value": Math.random()},
+        {"source": 4, "target": 2, "value": Math.random()},
+        {"source": 4, "target": 3, "value": Math.random()}  
+      ]
+}
+
+var newinput = {
+"n": [  {"key": "USA", "x":400, "y":100, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "RUS", "x":400, "y":500, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "CAN", "x":600, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "BRZ", "x":200, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"},
+        {"key": "test1", "class": "node", "radius": 6},
+        {"key": "test2", "class": "node", "radius": 6}
+      ],
+"l": [ {"source": 4, "target": 0, "value": Math.random()}, 
+        {"source": 4, "target": 1, "value": Math.random()},
+        {"source": 4, "target": 2, "value": Math.random()},
+        {"source": 4, "target": 3, "value": Math.random()},
+        {"source": 5, "target": 0, "value": Math.random()}, 
+        {"source": 5, "target": 1, "value": Math.random()},
+        {"source": 5, "target": 2, "value": Math.random()},
+        {"source": 5, "target": 3, "value": Math.random()} 
+      ]
+
+}
+
+
+var newinput2 = {
+"n": [  {"key": "USA", "x":400, "y":100, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "RUS", "x":400, "y":500, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "CAN", "x":600, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "BRZ", "x":200, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"},
+        {"key": "test1", "class": "node", "radius": 6},
+        {"key": "test2", "class": "node", "radius": 6}
+      ],
+"l": [ {"source": 4, "target": 0, "value": Math.random()}, 
+        {"source": 4, "target": 1, "value": Math.random()},
+        {"source": 4, "target": 2, "value": Math.random()},
+        {"source": 4, "target": 3, "value": Math.random()},
+        {"source": 5, "target": 0, "value": Math.random()}, 
+        {"source": 5, "target": 1, "value": Math.random()},
+        {"source": 5, "target": 2, "value": Math.random()},
+        {"source": 5, "target": 3, "value": Math.random()} 
+      ]
+
+}
+
+
+var newinput3 = {
+"n": [  {"key": "USA", "x":400, "y":100, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "RUS", "x":400, "y":500, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "CAN", "x":600, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"}, 
+        {"key": "BRZ", "x":200, "y":300, "fixed": true, "fill": "red", 
+        "radius": 8, "type": "anchor", "class": "anchor"},
+        {"key": "test1", "class": "node", "radius": 6},
+        {"key": "test2", "class": "node", "radius": 6}
+      ],
+"l": [ {"source": 4, "target": 0, "value": Math.random()}, 
+        {"source": 4, "target": 1, "value": Math.random()},
+        {"source": 4, "target": 2, "value": Math.random()},
+        {"source": 4, "target": 3, "value": Math.random()},
+        {"source": 5, "target": 0, "value": Math.random()}, 
+        {"source": 5, "target": 1, "value": Math.random()},
+        {"source": 5, "target": 2, "value": Math.random()},
+        {"source": 5, "target": 3, "value": Math.random()} 
+      ]
+
+}
+
+    //startForce();
+
+function transNode() {
+  /*inputJson = newinput;
+  update();*/
+inputJson = newinput;
+      force.stop();
+    update();
+    for (var i = n * n; i > 0; --i) force.tick();
+  //startForce();
+}
+var n = 100;
+function transNode2() {
+
+    inputJson = newinput2;
+    force.stop();
+    update();
+    for (var i = n * n; i > 0; --i) force.tick();
+
+}
+
+function transNode3() {
+
+    inputJson = newinput3;
+    force.stop();
+    update();
+    for (var i = n * n; i > 0; --i) force.tick();
+
+}
+
+function transNode_smooth() {
+   inputJson.l[0].value = Math.random(); 
+  inputJson.l[5].value = Math.random(); 
+   force.stop();
+   for (var i = n * n; i > 0; --i) force.tick();
+   //force.nodes(inputJson.n);
+   //force.links(inputJson.l);
+   force.start();
+   //update();
+}
+var dragAround = force.drag() //d3.behavior.drag()
+    .on("drag", function(d) {
+        if (d.class == "anchor") {
+            var mx = d3.mouse(this)[0];
+            var my = d3.mouse(this)[1];
+
+            //get angle
+            var omega = Math.atan2(mx - centerX, my - centerY);
+            var px = centerX + bigRadius * Math.sin(omega);
+            var py = centerY + bigRadius * Math.cos(omega);
+
+            d3.select(this)
+
+            var i = d.index; 
+            inputJson.n[i].x = px;
+            inputJson.n[i].px = px;
+            inputJson.n[i].y = py;
+            inputJson.n[i].py = py;
+        
+        }
+    });
+
+var nodes = force.nodes(), links = force.links();
+function update() {
+
+              force
+                .nodes(inputJson.n)
+                .links(inputJson.l)
+                .linkStrength(function(d) {return d.value})
+                .charge(0)
+                .gravity(0)
+                .start();
+
+            // nodes = inputJson.n; links = inputJson.l;
+
+            var link = vis.selectAll("line")
+                    .data(inputJson.l, function (d) {
+                        return d.source.index + "-" + d.target.index;
+                    });
+
+            link.enter().append("line")
+                    .attr("id", function (d) {
+                        return d.source.index + "-" + d.target.index;
+                    })
+                    .attr("class", "link");
+            link.append("title")
+                    .text(function (d) {
+                        return d.value;
+                    });
+            link.exit().remove();
+
+            var node = vis.selectAll("circle.n")
+                    .data(inputJson.n, function (d) {
+                        return d.index;
+                    });
+
+            var nodeEnter = node.enter().append("circle")
+                      .attr("class", function(d) {return "n " + d.class;});
+
+            nodeEnter.attr("type", function(d) {return d.type; })
+                      .attr("cx", function(d) { return d.x; })
+                      .attr("cy", function(d) { return d.y; })
+                      .attr("r", function(d) { return d.radius; })
+                      .on("mouseover", function(d){return tooltip.style("visibility", "visible").text(d.key);})
+                      .on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");})
+                      .on("mouseout", function(){return tooltip.style("visibility", "hidden");})
+                      .call(dragAround);
+
+            node.exit().remove();
+
+            force.on("tick", function() {
+                link.attr("x1", function(d) { return d.source.x; })
+                    .attr("y1", function(d) { return d.source.y; })
+                    .attr("x2", function(d) { return d.target.x; })
+                    .attr("y2", function(d) { return d.target.y; });
+
+                node.attr("cx", function(d) { return d.x; })
+                    .attr("cy", function(d) { return d.y; });
+
+            });
+
+}
+
+var link, anchornode, node;
+function startForce() {
+  force
+    .nodes(inputJson.n)
+    .links(inputJson.l)
+    .linkStrength(function(d) {return d.value})
+    .charge(0)
+    .gravity(0)
+    .start();
+
+  link = vis.selectAll("line")
+      .data(inputJson.l)
+    .enter().append("line")
+//http://mbostock.github.io/d3/talk/20110921/bounding.html
+      .attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  node = vis.selectAll("circle.n")
+        .data(inputJson.n)
+      .enter().append("circle")
+        .attr("type", function(d) {return d.type; })
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; })
+        .attr("r", function(d) { return d.radius; })
+        .attr("class", function(d) {return d.class;})
+        .on("mouseover", function(d){return tooltip.style("visibility", "visible").text(d.key);})
+        .on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");})
+        .on("mouseout", function(){return tooltip.style("visibility", "hidden");})
+        .call(dragAround);
+
+  force.on("tick", tick);
+}
+
+function tick(e) {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+   node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+}
+
+
+
+vis.selectAll("circle")
+    .data([1])
+    .enter().append("svg:circle")
+    .attr("id", "ring")
+    .attr("cx", centerX)
+    .attr("cy", centerY)
+    .attr("r", bigRadius)
+    .style("stroke", "black")
+    .style("fill", "none");
+
+
+    </script>
+  </body>
+</html>
